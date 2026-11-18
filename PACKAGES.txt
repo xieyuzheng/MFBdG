@@ -1,0 +1,20 @@
+MFBdG packages
+Windows x64, Python (MFBdG) Jupyter kernel, Miniforge
+
+Solver
+  Python 3.12.12
+  NumPy 2.4.1
+  SciPy 1.16.3
+  threadpoolctl 3.6.0 (per-process thread limits for parallel energy descent)
+
+Numerical backend used in the 20x20 benchmark
+  Intel MKL 2026.1.0 (NumPy BLAS/LAPACK)
+
+Plotting and notebook
+  Matplotlib 3.10.8
+  ipykernel 7.1.0
+  matplotlib-inline 0.2.1
+
+Installed notebook frontends
+  JupyterLab 4.5.5
+  Jupyter Notebook 7.5.3
