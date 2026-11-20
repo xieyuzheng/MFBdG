@@ -22,37 +22,6 @@ def triangle_forms(shell):
     return forms
 
 
-def pair_seed(name, param):
-    """Amplitude 0.1 on active shells, with opposite-spin singlet or t0 triplet structure."""
-    nx, ny = param["Nx"], param["Ny"]
-    y, x = np.indices((ny, nx))
-    i = y*nx + x
-    pair = np.zeros((nx*ny, nx*ny), complex)
-    count = np.zeros(pair.shape, int)
-    odd = name in ("pwave", "py", "p+ip", "p-ip", "fwave", "f_y")
-    for shell, offsets in enumerate(TRIANGLE_BONDS, 1):
-        if not param.get(f"V{shell}", 0):
-            continue
-        f = triangle_forms(shell)
-        weights = {"extended_s": f["extended s"], "dwave": f["d_x2-y2"], "dxy": f["d_xy"],
-                   "d+id": f["d_x2-y2"] + 1j*f["d_xy"], "d-id": f["d_x2-y2"] - 1j*f["d_xy"],
-                   "pwave": f["p_x"], "py": f["p_y"], "p+ip": f["p_x"] + 1j*f["p_y"],
-                   "p-ip": f["p_x"] - 1j*f["p_y"], "fwave": f.get("f_x", np.zeros(3)),
-                   "f_y": f.get("f_y", np.zeros(3))}[name]
-        for (dx, dy), value in zip(offsets, weights):
-            valid = np.ones(i.shape, bool)
-            if param.get("Boundary_Condition", "PBC") == "OBC":
-                valid = (x+dx >= 0) & (x+dx < nx) & (y+dy >= 0) & (y+dy < ny)
-            a = i[valid]
-            b = ((y[valid]+dy) % ny)*nx + (x[valid]+dx) % nx
-            pair[a, b] += value
-            pair[b, a] += -value if odd else value
-            count[a, b] += 1
-            count[b, a] += 1
-    pair *= 0.1 / np.maximum(count, 1)
-    return np.kron(pair, [[0, 1], [1 if odd else -1, 0]])
-
-
 def pairing_channels(shell, direction, coupling):
     """Resolve the three even and three odd amplitudes using their orthogonal bond vectors."""
     singlet, triplet = zip(*(direction(dx, dy) for dx, dy in TRIANGLE_BONDS[shell-1]))

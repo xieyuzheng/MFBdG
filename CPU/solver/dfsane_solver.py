@@ -90,37 +90,3 @@ def dfsane_one_iteration(func, V, Fk, Vprev, Fprev, fkval, fkval_init, k, Cnum, 
             Cnum_new = fkstep
             Qnum_new = 1.0
             return Vstep, Fkstep, fkstep, Cnum_new, Qnum_new, extra
-
-def run_dfsane_self_consistent(func, V_init, maxiter=1000, tol=1e-10):
-    V = V_init.copy()
-    result = func(V)
-    if isinstance(result, tuple):
-        Fk, *extra = result
-    else:
-        Fk, extra = result, None
-        
-    fkval = fmerit(Fk)
-    fkval_init = fkval
-
-    Vprev = np.ones_like(V)
-    Fprev = np.ones_like(Fk)
-
-    Cnum = fkval_init
-    Qnum = 1.0
-
-    k = 0
-    err = np.sqrt(fkval) / np.sqrt(Fk.size)
-
-    while err >= tol and k < maxiter:
-        outputs = dfsane_one_iteration(func, V, Fk, Vprev, Fprev, fkval, fkval_init, k, Cnum, Qnum)
-        k += 1
-        Vnew, Fknew, fkval_new, Cnum, Qnum, extra = outputs
-        Vprev[:] = V
-        Fprev[:] = Fk
-        V[:] = Vnew
-        Fk[:] = Fknew
-        fkval = fkval_new
-        err = np.sqrt(fkval) / np.sqrt(Fk.size)
-
-    return V, k, err, extra 
-

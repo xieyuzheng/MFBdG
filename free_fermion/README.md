@@ -3,11 +3,11 @@
 Run from the MFBdG project root using an existing JSON input.
 
 ```sh
-python free_fermion/Plot.py Square_example
-python free_fermion/Plot.py Triangle_example
+python free_fermion/Plot.py Square_full_example
+python free_fermion/Plot.py Triangle_pureSC_example
 ```
 
-For interactive plotting, open `free_fermion/Plot.ipynb` with the **Python (MFBdG)** kernel and run both code cells. Choose Square or Triangle, then adjust sliders for `t1`, `t2`, `t3`, `n_filling` and `Nk`. Plots update when a slider is released; the notebook does not automatically save PNGs. It requires `ipywidgets`.
+For interactive plotting, open `Notebook/Plot_free_fermion.ipynb` with the **Python (MFBdG)** kernel and run both code cells. Choose Square or Triangle, then adjust sliders for `t1`, `t2`, `t3`, `n_filling` and `Nk`. Plots update when a slider is released; the notebook does not automatically save PNGs. It requires `ipywidgets`.
 
 `bands.py` holds the shared calculation and plotting functions used by both the notebook and `Plot.py`.
 

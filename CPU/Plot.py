@@ -65,6 +65,57 @@ def pairing_channels(pair, param):
     return channels
 
 
+def momentum_plotting_data(state, param):
+    """Project directed cell bonds without folding distinct translations together."""
+    if 'bond_a' not in state:
+        from CPU.cell_bdg import model_from_input
+        model = model_from_input(param)
+        a, b, offset, onsite = model.a, model.b, model.offset, model.onsite
+    else:
+        a, b, offset, onsite = (state[k] for k in ('bond_a','bond_b','bond_offset','bond_onsite'))
+    n = param['Nx']*param['Ny']
+    shape = (param['Ny'], param['Nx'])
+    links = {}
+    local_pair = np.zeros(n,complex)
+    for i,j,d,on,value in zip(a,b,offset,onsite,state['pair_order']):
+        if on:
+            local_pair[i//2] = value
+            continue
+        dx,dy = map(int,d)
+        forward = links.setdefault((dx,dy),np.zeros((n,2,2),complex))
+        reverse = links.setdefault((-dx,-dy),np.zeros((n,2,2),complex))
+        forward[i//2,i%2,j%2] = value
+        reverse[j//2,j%2,i%2] = -value
+    if 'pair_local_order' in state:
+        local_pair = state['pair_local_order'][:,0,1]
+    def direction(dx,dy):
+        plus = links.get((dx,dy),np.zeros((n,2,2),complex)).reshape(*shape,2,2)
+        minus = links.get((-dx,-dy),np.zeros((n,2,2),complex)).reshape(*shape,2,2)
+        even, odd = (plus+minus)/2, (plus-minus)/2
+        return ((even[...,0,1]-even[...,1,0])/2,
+                np.stack((odd[...,0,0],(odd[...,0,1]+odd[...,1,0])/2,odd[...,1,1]),axis=-1))
+    channels = {}
+    if param.get('U',0) or not any(param.get(f'V{i}',0) for i in (1,2,3)):
+        channels['onsite s'] = param.get('U',0)*local_pair.reshape(shape)
+    pairing = triangle_pairing if param['lattice']=='Triangle' else square_pairing
+    for shell in (1,2,3):
+        if param.get(f'V{shell}',0):
+            channels.update(pairing.pairing_channels(shell,direction,param[f'V{shell}']))
+    rho = np.zeros((2*n,2*n),complex)
+    up = 2*np.arange(n)
+    for i in (0,1):
+        for j in (0,1):
+            rho[up+i,up+j] = state['rho_local'][:,i,j]
+    return state['density'], rho, channels
+
+
+def plotting_data(state, param):
+    if 'k_mesh' in state or 'bond_shift' in state:
+        return momentum_plotting_data(state,param)
+    density, rho, pair = plotting_orders(state)
+    return density, rho, pairing_channels(pair,param)
+
+
 def gap_magnitude(gap):
     if gap.ndim == 2:
         return abs(gap)
@@ -350,8 +401,7 @@ def plot_orders(channels, param, density, rho, output=None, nn_bonds=False, trip
 
 
 def plot_iteration_state(param, step, state):
-    density, rho, pair = plotting_orders(state)
-    channels = pairing_channels(pair, param)
+    density, rho, channels = plotting_data(state, param)
     plot_orders(channels, param, density, rho, nn_bonds=True, iteration=step)
 
 
@@ -364,8 +414,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     with np.load(args.data) as data:
         param = json.loads(data["parameters"].item())
-        density, rho, pair = plotting_orders(data)
-        channels = pairing_channels(pair, param)
+        density, rho, channels = plotting_data(data, param)
     print_channels(channels)
     suffix = "_nn_bonds.png" if args.nn_bonds else "_channels.png"
     output = args.data.with_name(args.data.stem + suffix)

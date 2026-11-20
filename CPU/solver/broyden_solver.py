@@ -1,22 +1,5 @@
 import numpy as np
 
-def safe_update(Vm, Vnext, is_feasible=None, max_backtracks=30):
-    if is_feasible(Vnext):
-        return Vnext
-
-    dV = Vnext - Vm
-    fac = 1.0
-
-    for _ in range(max_backtracks):
-        fac *= 0.5
-        Vtrial = Vm + fac * dV
-        if is_feasible(Vtrial):
-            return Vtrial
-
-    print(f"[update] WARNING: no feasible step after {max_backtracks} reductions; "
-          "keeping previous order (no update).", flush=True)
-    return Vm.copy()
-
 def Broyden_update(Fdiff, Vdiff, DFm_list, Um_list, Am_max, broyiter, alpha):
     Fdnorm = np.linalg.norm(Fdiff)
     DFm = Fdiff/Fdnorm
@@ -41,7 +24,6 @@ def Broyden_mixing(Vm, Fm,DFmat,Umat, Am, alpha, broyiter, is_feasible = None):
     cvec = DFmat.conj().T @ Fm
     Bmat = Bmat* cvec.T # all rows of B multiply by c
     Vmodmat = Umat@Bmat
-    Vmodmat = Vmodmat
     Vmod = np.sum(Vmodmat,axis=1) # sum all columns
     Vnext = Vnext - Vmod
 

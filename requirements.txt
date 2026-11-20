@@ -1,0 +1,4 @@
+numpy
+scipy
+psutil
+threadpoolctl>=3.8

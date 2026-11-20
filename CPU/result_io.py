@@ -1,4 +1,4 @@
-"""Compact order blocks for NPZ output and plotting.
+"""Read previously saved real-space order blocks for plotting.
 
 local_block has columns (n_up, n_down, rho_up_down, pair_up_down).
 normal_bond_block and pairing_block have shape (number of bonds, 2, 2),
@@ -11,26 +11,6 @@ so local constraints can be inspected.
 """
 
 import numpy as np
-
-
-def compact_result(state, terms):
-    """Store local and bond orders plus solver diagnostics."""
-    rho, pair = state["rho"], state["pair_order"]
-    n = len(rho) // 2
-    a, b = terms[1][1] // 2, terms[1][3] // 2
-    bonds = np.unique(np.column_stack((a[a != b], b[a != b])), axis=0)
-    i, j = bonds.T
-    spin_rho = rho.reshape(n, 2, n, 2)
-    spin_pair = pair.reshape(n, 2, n, 2)
-    up = 2 * np.arange(n)
-    local = np.column_stack((rho[up, up], rho[up+1, up+1],
-                             rho[up, up+1], pair[up, up+1]))
-    redundant = {"rho", "density", "pair_order", "pair_bdg", "order", "h", "delta"}
-    saved = {key: value for key, value in state.items() if key not in redundant}
-    saved.update(order_format="local_bond_v1", local_block=local, bond_sites=bonds,
-                 normal_bond_block=spin_rho[i, :, j, :],
-                 pairing_block=spin_pair[i, :, j, :])
-    return saved
 
 
 def plotting_orders(state):
